@@ -1,6 +1,6 @@
 import 'keen-slider/keen-slider.min.css';
 import { useKeenSlider } from 'keen-slider/react';
-import { GetServerSideProps } from 'next';
+import { GetStaticProps } from 'next';
 import Image from 'next/image';
 import Stripe from 'stripe';
 
@@ -13,7 +13,7 @@ interface HomeProps {
     id: string;
     name: string;
     imageUrl: string;
-    price: number;
+    price: string;
   }[];
 }
 
@@ -35,15 +35,15 @@ export default function Home({ products }: HomeProps) {
 
             <footer>
               <strong>{product.name}</strong>
-              <span>{parseCurrency(product.price)}</span>
+              <span>{product.price}</span>
             </footer>
           </Product>
         ))}
     </HomeContainer>
   );
 }
-
-export const getServerSideProps: GetServerSideProps = async () => {
+// With getStaticProps the page stay static for 2 hours
+export const getStaticProps: GetStaticProps = async () => {
   const response = await stripe.products.list({
     expand: ['data.default_price'],
   });
@@ -55,12 +55,13 @@ export const getServerSideProps: GetServerSideProps = async () => {
       id: product.id,
       name: product.name,
       imageUrl: product.images[0],
-      price: price.unit_amount && price.unit_amount / 100,
+      price: price.unit_amount && parseCurrency(price.unit_amount / 100),
     };
   });
   return {
     props: {
       products,
     },
+    revalidate: 1000 * 60 * 2, // 2 hours
   };
 };
