@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { GetStaticPaths, GetStaticProps } from 'next';
 import Image from 'next/image';
+import { useRouter } from 'next/router';
 import Stripe from 'stripe';
 
 import { stripe } from '../../lib/stripe';
@@ -18,10 +19,19 @@ interface ProductProps {
     imageUrl: string;
     price: string;
     description: string;
+    defaultPriceId: string;
   };
 }
 
 export default function Product({ product }: ProductProps) {
+  const { isFallback } = useRouter();
+
+  function handleBuyProduct() {
+    console.log(product.defaultPriceId);
+  }
+
+  if (isFallback) return <div>Loading...</div>;
+
   return (
     <ProductContainer>
       <ImageContainer>
@@ -34,7 +44,9 @@ export default function Product({ product }: ProductProps) {
 
         <p>{product.description}</p>
 
-        <button type="submit">Comprar agora</button>
+        <button type="submit" onClick={handleBuyProduct}>
+          Comprar agora
+        </button>
       </ProductDetails>
     </ProductContainer>
   );
@@ -43,7 +55,7 @@ export default function Product({ product }: ProductProps) {
 export const getStaticPaths: GetStaticPaths = async () => {
   return {
     paths: [{ params: { id: 'prod_MtieGHjTp8XYts' } }],
-    fallback: false,
+    fallback: true,
   };
 };
 
@@ -65,6 +77,7 @@ export const getStaticProps: GetStaticProps<any, { id: string }> = async ({
         imageUrl: product.images[0],
         price: price.unit_amount && parseCurrency(price.unit_amount / 100),
         description: product.description,
+        defaultPriceId: price.id,
       },
     },
     revalidate: 60 * 60 * 1, // hour
