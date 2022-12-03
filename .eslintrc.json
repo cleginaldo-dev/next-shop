@@ -27,6 +27,7 @@
     "prettier"
   ],
   "rules": {
+    "react/self-closing-comp": "off",
     "react/no-unstable-nested-components": "off",
     "import/no-unresolved": "off",
     "@typescript-eslint/naming-convention": [
