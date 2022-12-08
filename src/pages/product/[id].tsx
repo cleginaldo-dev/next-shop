@@ -1,7 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import axios from 'axios';
 import { GetStaticPaths, GetStaticProps } from 'next';
 import Image from 'next/image';
 import { useRouter } from 'next/router';
+import { useState } from 'react';
 import Stripe from 'stripe';
 
 import { stripe } from '../../lib/stripe';
@@ -24,10 +26,23 @@ interface ProductProps {
 }
 
 export default function Product({ product }: ProductProps) {
+  const [isLoading, setIsLoading] = useState(false);
   const { isFallback } = useRouter();
 
-  function handleBuyProduct() {
-    console.log(product.defaultPriceId);
+  async function handleBuyProduct() {
+    setIsLoading(true);
+    try {
+      const response = await axios.post('/api/createCheckoutSession', {
+        priceId: product.defaultPriceId,
+      });
+      const { checkoutUrl } = response.data;
+
+      window.location.href = checkoutUrl;
+    } catch (error) {
+      setIsLoading(false);
+      // eslint-disable-next-line no-alert
+      alert('Falha ao redirecionar ao checkout!');
+    }
   }
 
   if (isFallback) return <div>Loading...</div>;
@@ -44,7 +59,7 @@ export default function Product({ product }: ProductProps) {
 
         <p>{product.description}</p>
 
-        <button type="submit" onClick={handleBuyProduct}>
+        <button disabled={isLoading} type="submit" onClick={handleBuyProduct}>
           Comprar agora
         </button>
       </ProductDetails>
